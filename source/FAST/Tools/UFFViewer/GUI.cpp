@@ -1,4 +1,6 @@
 #include "GUI.hpp"
+#include <FAST/Streamers/OpenCVImageStreamer.hpp>
+#include <QMetaObject>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -51,21 +53,21 @@ UFFViewerWindow::UFFViewerWindow() {
 
 	// File selection
 	auto selectFileButton = new QPushButton;
-	selectFileButton->setText("Open UFF file");
+	selectFileButton->setText("Open Video file");
 	menuLayout->addWidget(selectFileButton);
 
 	auto fileLabel = new QLabel;
 	menuLayout->addWidget(fileLabel);
 
 	QObject::connect(selectFileButton, &QPushButton::clicked, [this, fileLabel]() {
-		auto filename = QFileDialog::getOpenFileName(mWidget, "Open File", NULL,
-			"Ultrasound File Format (UFF) (*.uff *.hd5 *.hdf5)");
-		if(!filename.isEmpty()) {
-			m_filename = filename.toStdString();
-			//fileLabel->setText(m_filename.substr(m_filename.rfind("/")+1).c_str());
-			loadView();
-		}
-	});
+    auto filename = QFileDialog::getOpenFileName(mWidget, "Open File", NULL,
+        "Video Files (*.avi *.mp4)");
+    if(!filename.isEmpty()) {
+        m_filename = filename.toStdString();
+        //fileLabel->setText(m_filename.substr(m_filename.rfind("/")+1).c_str());
+        loadView();
+    }
+});
 
 	// Pipeline selection and edit
 	auto pipelineLabel = new QLabel;
@@ -109,6 +111,22 @@ UFFViewerWindow::UFFViewerWindow() {
 		m_pipelineFile = pipelineFiles[pipelineSelection->currentIndex()];
 		loadView();
 	});
+
+	auto restartButton = new QPushButton;
+    restartButton->setText("Restart Pipeline");
+    menuLayout->addWidget(restartButton);
+    QObject::connect(restartButton, &QPushButton::clicked, this, &UFFViewerWindow::restartPipeline);
+
+    m_maxAreaLabel = new QLabel;
+    menuLayout->addWidget(m_maxAreaLabel);
+
+    m_minAreaLabel = new QLabel;
+    menuLayout->addWidget(m_minAreaLabel);
+
+    auto timer = new QTimer(this);
+    timer->setInterval(15000);
+    QObject::connect(timer, &QTimer::timeout, this, &UFFViewerWindow::updateAreaLabels);
+    timer->start();
 
 	// Framerate control
 	auto framerateLabel = new QLabel;
@@ -204,13 +222,8 @@ void UFFViewerWindow::setFilename(std::string filename) {
 void UFFViewerWindow::loadView() {
     // Set up pipeline and view
     try {
-        m_streamer = UFFStreamer::create(
-                m_filename,
-                true,
-                m_framerate,
-                m_gainInput->currentIndex()+1,
-                m_dynamicRangeInput->currentIndex()+1
-        );
+        m_streamer = OpenCVImageStreamer::New();
+        m_streamer->setFilename(m_filename);
         m_streamer->setMaximumNrOfFrames(1); // To avoid glitches in playback we set the queue size to 1
     } catch(Exception &e) {
         std::string errorMessage = e.what();
@@ -220,6 +233,8 @@ void UFFViewerWindow::loadView() {
                                         QMessageBox::Ok);
         return;
     }
+
+}
 
     // Set up pipeline and view
     try {
@@ -288,4 +303,4 @@ void UFFViewerWindow::loadView() {
     }
 }
 
-}
+}}

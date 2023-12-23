@@ -5,7 +5,7 @@ using namespace fast;
 
 int main(int argc, char** argv) {
 	CommandLineParser parser("Ultasound File Format FAST Viewer");
-	parser.addPositionVariable(1, "filename", false, "Path to uff file to open");
+	parser.addPositionVariable(1, "filename", false, "Path to video file to open");
 	parser.addOption("verbose");
 	parser.parse(argc, argv);
 
