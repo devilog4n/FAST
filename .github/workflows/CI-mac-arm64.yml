@@ -2,9 +2,9 @@ name: CI macOS 11 arm64
 
 on:
   push:
-    branches: [ master ]
+    branches: [ aug17 ]
   pull_request:
-    branches: [ master ]
+    branches: [ aug17 ]
   release:
     types: [ published ]
   workflow_dispatch:
